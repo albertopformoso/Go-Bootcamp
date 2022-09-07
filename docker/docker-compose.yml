@@ -1,0 +1,17 @@
+version: '3.9'
+services:
+  api:
+    container_name: go-api
+    tty: true
+    stdin_open: true
+    restart: on-failure
+    ports:
+      - 8080:8080
+    image: go-alpine
+    build:
+      context: ./..
+      dockerfile: Dockerfile
+    volumes:
+      - ../data:/data
+    env_file:
+      - ./../.env
