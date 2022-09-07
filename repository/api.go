@@ -48,7 +48,7 @@ func (pa PokeAPI) GetPokemons() ([]model.Pokemon, error) {
 	return pokemons, nil
 }
 
-func (pa PokeAPI) GetEvenOdd(ty string, items, items_per_workers int) ([]model.Pokemon, error) {
+func (pa PokeAPI) GetEvenOdd(ty string, items, itemsPerWorkers int) ([]model.Pokemon, error) {
 	ls := LocalStorage{}
 	var comp int
 
@@ -60,7 +60,7 @@ func (pa PokeAPI) GetEvenOdd(ty string, items, items_per_workers int) ([]model.P
 		return nil, fmt.Errorf("type %q not supported", ty)
 	}
 
-	pokemons, err := ls.EvenOddRead(comp, items, items_per_workers)
+	pokemons, err := ls.EvenOddRead(comp, items, itemsPerWorkers)
 	if err != nil {
 		return nil, err
 	}

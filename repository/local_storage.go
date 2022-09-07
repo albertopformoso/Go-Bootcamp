@@ -77,7 +77,7 @@ func (l LocalStorage) Read() ([]model.Pokemon, error) {
 	return pokemons, nil
 }
 
-func (l LocalStorage) EvenOddRead(comp, items, items_per_workers int) ([]model.Pokemon, error) {
+func (l LocalStorage) EvenOddRead(comp, items, itemsPerWorkers int) ([]model.Pokemon, error) {
 	syscall.Umask(0)
 	filePath := path.Join(dir, file)
 	f, err := os.Open(filePath)
@@ -112,7 +112,7 @@ func (l LocalStorage) EvenOddRead(comp, items, items_per_workers int) ([]model.P
 		items = count
 	}
 
-	pokemons, err := parseCSVData(records, comp, items, items_per_workers)
+	pokemons, err := parseCSVData(records, comp, items, itemsPerWorkers)
 	if err != nil {
 		return nil, err
 	}
@@ -138,12 +138,12 @@ func buildRecords(pokemons []model.Pokemon) [][]string {
 	return records
 }
 
-func parseCSVData(records [][]string, comp, items, items_per_workers int) ([]model.Pokemon, error) {
+func parseCSVData(records [][]string, comp, items, itemsPerWorkers int) ([]model.Pokemon, error) {
 	jobs := make(chan []string, items)
 	results := make(chan model.Pokemon, items)
 	var pokemons []model.Pokemon
 
-	for w := 1; w <= items_per_workers; w++ {
+	for w := 1; w <= itemsPerWorkers; w++ {
 		go worker(w, comp, jobs, results)
 	}
 

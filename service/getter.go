@@ -24,8 +24,8 @@ func (g Getter) GetPokemons() ([]model.Pokemon, error) {
 	return pokemons, nil
 }
 
-func (g Getter) GetEvenOdd(ty string, items, items_per_workers int) ([]model.Pokemon, error) {
-	pokemons, err := g.api.GetEvenOdd(ty, items, items_per_workers)
+func (g Getter) GetEvenOdd(ty string, items, itemsPerWorkers int) ([]model.Pokemon, error) {
+	pokemons, err := g.api.GetEvenOdd(ty, items, itemsPerWorkers)
 	if err != nil {
 		return nil, err
 	}
