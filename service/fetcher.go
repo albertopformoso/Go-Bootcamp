@@ -12,10 +12,6 @@ import (
 
 var wg = sync.WaitGroup{}
 
-type api interface {
-	FetchPokemon(id int) (model.Pokemon, error)
-}
-
 type writer interface {
 	Write(pokemons []model.Pokemon) error
 }
