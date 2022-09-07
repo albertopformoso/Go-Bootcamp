@@ -9,4 +9,5 @@ import (
 func Routes(router *http.ServeMux, ctrl controller.API) {
 	router.HandleFunc("/api/v1/provide", ctrl.FillCSV)
 	router.HandleFunc("/api/v1/pokemons", ctrl.GetPokemons)
+	router.HandleFunc("/api/v1/even-odd", ctrl.GetEvenOdd)
 }

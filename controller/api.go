@@ -24,6 +24,7 @@ type fetcher interface {
 
 type getter interface {
 	GetPokemons() ([]model.Pokemon, error)
+	GetEvenOdd(ty string, items, items_per_workers int) ([]model.Pokemon, error)
 }
 
 func (api API) FillCSV(w http.ResponseWriter, r *http.Request) {
@@ -85,6 +86,53 @@ func (api API) GetPokemons(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pokemons, err := api.getter.GetPokemons()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(
+			ErrMessage("FAIL: can't get the pokemons -", err),
+		)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(pokemons)
+}
+
+func (api API) GetEvenOdd(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(
+			Message(fmt.Sprintf("Method %v not allowed", r.Method)),
+		)
+		return
+	}
+
+	requestBody := struct {
+		Type            string `json:"type"`
+		Items           int    `json:"items"`
+		ItemsPerWorkers int    `json:"items_per_workers"`
+	}{"even", 4, 4}
+
+	reqBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(
+			ErrMessage("Error:", err),
+		)
+		return
+	}
+
+	if err := json.Unmarshal(reqBody, &requestBody); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(
+			ErrMessage("ERROR:", err),
+		)
+		return
+	}
+
+	pokemons, err := api.getter.GetEvenOdd(requestBody.Type, requestBody.Items, requestBody.ItemsPerWorkers)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(

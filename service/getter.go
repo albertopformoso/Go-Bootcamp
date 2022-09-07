@@ -1,6 +1,10 @@
 package service
 
-import "github.com/albertopformoso/Go-Bootcamp/model"
+import (
+	"sort"
+
+	"github.com/albertopformoso/Go-Bootcamp/model"
+)
 
 type Getter struct {
 	api api
@@ -16,5 +20,16 @@ func (g Getter) GetPokemons() ([]model.Pokemon, error) {
 		return nil, err
 	}
 
+	sort.Sort(PokemonsByID(pokemons))
+	return pokemons, nil
+}
+
+func (g Getter) GetEvenOdd(ty string, items, items_per_workers int) ([]model.Pokemon, error) {
+	pokemons, err := g.api.GetEvenOdd(ty, items, items_per_workers)
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Sort(PokemonsByID(pokemons))
 	return pokemons, nil
 }
