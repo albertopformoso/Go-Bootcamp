@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -48,6 +49,33 @@ func (l LocalStorage) Write(pokemons []model.Pokemon) error {
 	return nil
 }
 
+func (l LocalStorage) Read() ([]model.Pokemon, error) {
+    syscall.Umask(0)
+	filePath := path.Join(dir, file)
+    f, err := os.Open(filePath)
+    defer func() {
+        if err := f.Close(); err != nil {
+            log.Printf("ERROR: file not closed")
+        }
+    }()
+    if err != nil {
+        return nil, err
+    }
+
+    r := csv.NewReader(f)
+    records, err := r.ReadAll()
+    if err != nil {
+        return nil, err
+    }
+
+    pokemons, err := parseCSVData(records)
+    if err != nil {
+        return nil, err
+    }
+
+    return pokemons, nil
+}
+
 // It takes a slice of Pokemon structs and returns a slice of slices of strings
 func buildRecords(pokemons []model.Pokemon) [][]string {
 	headers := []string{"id", "name", "height", "weight", "flat_abilities"}
@@ -64,4 +92,39 @@ func buildRecords(pokemons []model.Pokemon) [][]string {
 	}
 
 	return records
+}
+
+func parseCSVData(records [][]string) ([]model.Pokemon, error) {
+    var pokemons []model.Pokemon
+    for i, record := range records {
+        if i == 0 {
+            continue
+        }
+
+        id, err := strconv.Atoi(record[0])
+        if err != nil {
+            return nil, err
+        }
+
+        height, err := strconv.Atoi(record[2])
+        if err != nil {
+            return nil, err
+        }
+
+        weight, err := strconv.Atoi(record[3])
+        if err != nil {
+            return nil, err
+        }
+
+        pokemon := model.Pokemon{
+            ID: id,
+            Name: record[1],
+            Height: height,
+            Weight: weight,
+            FlatAbilityURLs: record[4],
+        }
+        pokemons = append(pokemons, pokemon)
+    }
+
+    return pokemons, nil
 }
