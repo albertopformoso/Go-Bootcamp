@@ -10,6 +10,8 @@ import (
 	"github.com/albertopformoso/Go-Bootcamp/model"
 )
 
+var wg = sync.WaitGroup{}
+
 type api interface {
 	FetchPokemon(id int) (model.Pokemon, error)
 }
@@ -64,7 +66,6 @@ func (f Fetcher) Fetch(from, to int) error {
 // It takes a context, a range of IDs, and a Fetcher, and returns a channel of Results
 func GetResponses(ctx context.Context, from, to int, f Fetcher) <-chan Result {
     results := make(chan Result)
-    wg := sync.WaitGroup{}
 
     go func() {
         wg.Wait()
@@ -73,7 +74,7 @@ func GetResponses(ctx context.Context, from, to int, f Fetcher) <-chan Result {
 
     for id := from; id <= to; id++ {
         wg.Add(1)
-        go PingAPI(ctx, wg, id, f, results)
+        go PingAPI(ctx, id, f, results)
     }
 
     return results
@@ -81,7 +82,7 @@ func GetResponses(ctx context.Context, from, to int, f Fetcher) <-chan Result {
 
 // It takes a context, a waitgroup, an id, a fetcher, and a channel of results. It then fetches a
 // pokemon from the API, flattens the abilities, and sends the result to the channel
-func PingAPI(ctx context.Context, wg sync.WaitGroup, id int, f Fetcher, results chan Result) {
+func PingAPI(ctx context.Context, id int, f Fetcher, results chan Result) {
 	defer wg.Done()
 	var result Result
 	pokemon, err := f.api.FetchPokemon(id)
