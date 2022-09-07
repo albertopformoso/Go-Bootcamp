@@ -40,6 +40,7 @@ func (api API) FillCSV(w http.ResponseWriter, r *http.Request) {
         _ = json.NewEncoder(w).Encode(
             ErrMessage("ERROR:", err),
         )
+        return
     }
 
 	if err := api.Fetch(requestBody.From, requestBody.To); err != nil {
@@ -47,6 +48,7 @@ func (api API) FillCSV(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(
 			ErrMessage("Error:", err),
 		)
+        return
 	}
 
 	w.WriteHeader(http.StatusOK)
