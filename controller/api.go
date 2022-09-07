@@ -1,6 +1,7 @@
 package controller
 
 import (
+    "fmt"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -20,6 +21,14 @@ type fetcher interface {
 
 func (api API) FillCSV(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
+
+    if r.Method != "GET" {
+        w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(
+			Message(fmt.Sprintf("Method %v not allowed", r.Method)),
+		)
+        return
+    }
 
 	requestBody := struct {
 		From int `json:"from"`
