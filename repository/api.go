@@ -39,11 +39,11 @@ func (pa PokeAPI) FetchPokemon(id int) (model.Pokemon, error) {
 }
 
 func (pa PokeAPI) GetPokemons() ([]model.Pokemon, error) {
-    ls := LocalStorage{}
-    pokemons, err := ls.Read()
-    if err != nil {
-        return nil, err
-    }
+	ls := LocalStorage{}
+	pokemons, err := ls.Read()
+	if err != nil {
+		return nil, err
+	}
 
-    return pokemons, nil
+	return pokemons, nil
 }

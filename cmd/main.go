@@ -23,7 +23,7 @@ func main() {
 	storage := repository.LocalStorage{}
 
 	svcFetcher := service.NewFetcher(api, storage)
-    svcGetter := service.NewGetter(api)
+	svcGetter := service.NewGetter(api)
 	ctrl := controller.NewAPI(svcFetcher, svcGetter)
 
 	router.Routes(mux, ctrl)

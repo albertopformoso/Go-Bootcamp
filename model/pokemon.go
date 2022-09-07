@@ -13,7 +13,7 @@ type Pokemon struct {
 		} `json:"ability"`
 	} `json:"abilities,omitempty"`
 
-	FlatAbilityURLs string   `json:"flat_ability_urls"`
+	FlatAbilityURLs string `json:"flat_ability_urls"`
 }
 
 type Ability struct {
