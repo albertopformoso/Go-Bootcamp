@@ -29,22 +29,28 @@ func (api API) FillCSV(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(
+		_ = json.NewEncoder(w).Encode(
 			ErrMessage("Error:", err),
 		)
 		return
 	}
 
-	json.Unmarshal(reqBody, &requestBody)
+    if err := json.Unmarshal(reqBody, &requestBody); err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        _ = json.NewEncoder(w).Encode(
+            ErrMessage("ERROR:", err),
+        )
+    }
+
 	if err := api.Fetch(requestBody.From, requestBody.To); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(
+		_ = json.NewEncoder(w).Encode(
 			ErrMessage("Error:", err),
 		)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(
+	_ = json.NewEncoder(w).Encode(
 		Message("Pokemons Fetched Successfully!"),
 	)
 }
