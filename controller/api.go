@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/albertopformoso/Go-Bootcamp/model"
 )
@@ -24,7 +26,7 @@ type fetcher interface {
 
 type getter interface {
 	GetPokemons() ([]model.Pokemon, error)
-	GetEvenOdd(ty string, items, items_per_workers int) ([]model.Pokemon, error)
+	GetEvenOdd(ty string, items, itemsPerWorkers int) ([]model.Pokemon, error)
 }
 
 func (api API) FillCSV(w http.ResponseWriter, r *http.Request) {
@@ -109,30 +111,53 @@ func (api API) GetEvenOdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestBody := struct {
-		Type            string `json:"type"`
-		Items           int    `json:"items"`
-		ItemsPerWorkers int    `json:"items_per_workers"`
-	}{"even", 4, 4}
+	typeKey, ok := r.URL.Query()["type"]
+    if !ok || len(typeKey[0]) < 1 {
+        w.WriteHeader(http.StatusBadRequest)
+        log.Println("URL Param 'type' is missing")
+        _ = json.NewEncoder(w).Encode(
+            Message("URL Param 'type' is missing"),
+        )
+        return
+    }
 
-	reqBody, err := io.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(
-			ErrMessage("Error:", err),
-		)
-		return
-	}
+    itemsKey, ok := r.URL.Query()["items"]
+    if !ok || len(itemsKey[0]) < 1 {
+        w.WriteHeader(http.StatusBadRequest)
+        log.Println("URL Param 'items' is missing")
+        _ = json.NewEncoder(w).Encode(
+            Message("URL Param 'items' is missing"),
+        )
+        return
+    }
 
-	if err := json.Unmarshal(reqBody, &requestBody); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_ = json.NewEncoder(w).Encode(
+    itemsPerWorkersKey, ok := r.URL.Query()["items_per_workers"]
+    if !ok || len(itemsPerWorkersKey[0]) < 1 {
+        w.WriteHeader(http.StatusBadRequest)
+        log.Println("URL Param 'items_per_workers' is missing")
+        _ = json.NewEncoder(w).Encode(
+            Message("URL Param 'items_per_workers' is missing"),
+        )
+        return
+    }
+
+    ty := typeKey[0]
+    items, err := strconv.Atoi(itemsKey[0])
+    if err != nil {
+        _ = json.NewEncoder(w).Encode(
 			ErrMessage("ERROR:", err),
 		)
-		return
-	}
+        return
+    }
+    itemsPerWorkers, err := strconv.Atoi(itemsPerWorkersKey[0])
+    if err != nil {
+        _ = json.NewEncoder(w).Encode(
+			ErrMessage("ERROR:", err),
+		)
+        return
+    }
 
-	pokemons, err := api.getter.GetEvenOdd(requestBody.Type, requestBody.Items, requestBody.ItemsPerWorkers)
+	pokemons, err := api.getter.GetEvenOdd(ty, items, itemsPerWorkers)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(
