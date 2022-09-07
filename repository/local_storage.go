@@ -8,6 +8,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/albertopformoso/Go-Bootcamp/model"
@@ -18,6 +19,11 @@ type LocalStorage struct{}
 const (
 	file string = "pokemons.csv"
 	dir  string = "data"
+)
+
+const (
+	totalJobs    = 4
+	totalWorkers = 30
 )
 
 // Creating a file and writing the data to it.
@@ -95,36 +101,63 @@ func buildRecords(pokemons []model.Pokemon) [][]string {
 }
 
 func parseCSVData(records [][]string) ([]model.Pokemon, error) {
+	jobs := make(chan []string, 4)
+	results := make(chan model.Pokemon, 4)
 	var pokemons []model.Pokemon
-	for i, record := range records {
-		if i == 0 {
-			continue
-		}
 
-		id, err := strconv.Atoi(record[0])
-		if err != nil {
-			return nil, err
-		}
-
-		height, err := strconv.Atoi(record[2])
-		if err != nil {
-			return nil, err
-		}
-
-		weight, err := strconv.Atoi(record[3])
-		if err != nil {
-			return nil, err
-		}
-
-		pokemon := model.Pokemon{
-			ID:              id,
-			Name:            record[1],
-			Height:          height,
-			Weight:          weight,
-			FlatAbilityURLs: record[4],
-		}
-		pokemons = append(pokemons, pokemon)
+	for w := 1; w <= totalWorkers; w++ {
+		go worker(w, jobs, results)
 	}
 
+	// Send jobs
+	for _, record := range records {
+		jobs <- record
+	}
+	close(jobs)
+
+	// Receive results
+	for a := 1; a <= len(records)-1; a++ {
+		result := <-results
+		pokemons = append(pokemons, result)
+	}
+	close(results)
+
 	return pokemons, nil
+}
+
+func worker(wId int, jobs <-chan []string, results chan<- model.Pokemon) {
+	var wg sync.WaitGroup
+
+	for record := range jobs {
+		wg.Add(1)
+
+		go func(record []string) {
+			defer wg.Done()
+			id, err := strconv.Atoi(record[0])
+			if err != nil {
+				return
+			}
+
+			height, err := strconv.Atoi(record[2])
+			if err != nil {
+				return
+			}
+
+			weight, err := strconv.Atoi(record[3])
+			if err != nil {
+				return
+			}
+
+			pokemon := model.Pokemon{
+				ID:              id,
+				Name:            record[1],
+				Height:          height,
+				Weight:          weight,
+				FlatAbilityURLs: record[4],
+			}
+			results <- pokemon
+		}(record)
+	}
+
+	wg.Wait()
 }
