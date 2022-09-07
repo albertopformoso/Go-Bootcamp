@@ -45,7 +45,7 @@ func buildRecords(pokemons []model.Pokemon) [][]string {
 			pokemon.Name,
 			pokemon.Height,
 			pokemon.Weight,
-			pokemon.FlatAbilitiyURLs,
+			pokemon.FlatAbilityURLs,
 		)
 		records = append(records, strings.Split(record, ","))
 	}
