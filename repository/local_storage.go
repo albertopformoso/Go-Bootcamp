@@ -15,21 +15,21 @@ import (
 type LocalStorage struct{}
 
 const (
-    file string = "pokemons.csv"
-    dir string = "data"
+	file string = "pokemons.csv"
+	dir  string = "data"
 )
 
 // Creating a file and writing the data to it.
 func (l LocalStorage) Write(pokemons []model.Pokemon) error {
 	syscall.Umask(0)
-    filePath := path.Join(dir, file)
-    if _, err := os.Stat(filePath); os.IsNotExist(err) {
-        if err := os.MkdirAll(dir, 0777); err != nil {
-            log.Println(err)
-        }
-    }
+	filePath := path.Join(dir, file)
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, 0777); err != nil {
+			log.Println(err)
+		}
+	}
 
-    file, err := os.Create(filePath)
+	file, err := os.Create(filePath)
 	defer func() {
 		if err := file.Close(); err != nil {
 			log.Println("ERROR: file not closed")

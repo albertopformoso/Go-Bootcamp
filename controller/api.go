@@ -44,20 +44,20 @@ func (api API) FillCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    if err := json.Unmarshal(reqBody, &requestBody); err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        _ = json.NewEncoder(w).Encode(
-            ErrMessage("ERROR:", err),
-        )
-        return
-    }
+	if err := json.Unmarshal(reqBody, &requestBody); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(
+			ErrMessage("ERROR:", err),
+		)
+		return
+	}
 
 	if err := api.Fetch(requestBody.From, requestBody.To); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(
 			ErrMessage("Error:", err),
 		)
-        return
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
