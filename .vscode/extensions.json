@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "editorconfig.editorconfig",
+    "mikestead.dotenv",
+    "golang.go",
+    "mechatroner.rainbow-csv",
+    "redhat.vscode-yaml"
+  ]
+}
