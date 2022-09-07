@@ -1,0 +1,7 @@
+/.github
+/data
+
+.gitignore
+.editorconfig
+*.md
+Makefile
