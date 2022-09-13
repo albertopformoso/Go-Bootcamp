@@ -12,10 +12,6 @@ import (
 
 var wg = sync.WaitGroup{}
 
-type api interface {
-	FetchPokemon(id int) (model.Pokemon, error)
-}
-
 type writer interface {
 	Write(pokemons []model.Pokemon) error
 }
@@ -43,41 +39,41 @@ func NewFetcher(api api, storage writer) Fetcher {
 // Fetching a range of pokemon from the API, and writing them to the storage.
 func (f Fetcher) Fetch(from, to int) error {
 	var pokemons []model.Pokemon
-    ctx, cancel := context.WithCancel(context.Background())
-    defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-    channel := GetResponses(ctx, from, to, f)
+	channel := GetResponses(ctx, from, to, f)
 
 	for id := from; id <= to; id++ {
 		result := <-channel
-        if result.Error != nil {
-            log.Printf("ERROR: %v", result.Error)
-            cancel()
-            continue
-        }
+		if result.Error != nil {
+			log.Printf("ERROR: %v", result.Error)
+			cancel()
+			continue
+		}
 		pokemons = append(pokemons, result.Pokemon)
 	}
 
-    sort.Sort(PokemonsByID(pokemons))
+	sort.Sort(PokemonsByID(pokemons))
 
 	return f.storage.Write(pokemons)
 }
 
 // It takes a context, a range of IDs, and a Fetcher, and returns a channel of Results
 func GetResponses(ctx context.Context, from, to int, f Fetcher) <-chan Result {
-    results := make(chan Result)
+	results := make(chan Result)
 
-    go func() {
-        wg.Wait()
-        close(results)
-    }()
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
 
-    for id := from; id <= to; id++ {
-        wg.Add(1)
-        go PingAPI(ctx, id, f, results)
-    }
+	for id := from; id <= to; id++ {
+		wg.Add(1)
+		go PingAPI(ctx, id, f, results)
+	}
 
-    return results
+	return results
 }
 
 // It takes a context, a waitgroup, an id, a fetcher, and a channel of results. It then fetches a
@@ -102,4 +98,3 @@ func PingAPI(ctx context.Context, id int, f Fetcher, results chan Result) {
 	case results <- result:
 	}
 }
-

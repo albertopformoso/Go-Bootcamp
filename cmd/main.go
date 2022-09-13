@@ -22,8 +22,9 @@ func main() {
 	api := repository.PokeAPI{}
 	storage := repository.LocalStorage{}
 
-	svc := service.NewFetcher(api, storage)
-	ctrl := controller.NewAPI(svc)
+	svcFetcher := service.NewFetcher(api, storage)
+	svcGetter := service.NewGetter(api)
+	ctrl := controller.NewAPI(svcFetcher, svcGetter)
 
 	router.Routes(mux, ctrl)
 
