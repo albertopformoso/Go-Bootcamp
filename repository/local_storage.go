@@ -21,11 +21,6 @@ const (
 	dir  string = "data"
 )
 
-const (
-	totalJobs    = 4
-	totalWorkers = 30
-)
-
 // Creating a file and writing the data to it.
 func (l LocalStorage) Write(pokemons []model.Pokemon) error {
 	syscall.Umask(0)
@@ -74,7 +69,50 @@ func (l LocalStorage) Read() ([]model.Pokemon, error) {
 		return nil, err
 	}
 
-	pokemons, err := parseCSVData(records)
+	pokemons, err := parseCSVData(records, -1, len(records)-1, 4)
+	if err != nil {
+		return nil, err
+	}
+
+	return pokemons, nil
+}
+
+func (l LocalStorage) EvenOddRead(comp, items, itemsPerWorkers int) ([]model.Pokemon, error) {
+	syscall.Umask(0)
+	filePath := path.Join(dir, file)
+	f, err := os.Open(filePath)
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("ERROR: file not closed")
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	r := csv.NewReader(f)
+	records, err := r.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// Count max even/odd numbers depending on the request
+	var count int
+	for i := range records {
+		if i%2 == comp {
+			count++
+		}
+	}
+	if comp == 0 {
+		count--
+	}
+
+	if count < items {
+		log.Printf("There are no %d items, max items: %d", items, count)
+		items = count
+	}
+
+	pokemons, err := parseCSVData(records, comp, items, itemsPerWorkers)
 	if err != nil {
 		return nil, err
 	}
@@ -100,13 +138,13 @@ func buildRecords(pokemons []model.Pokemon) [][]string {
 	return records
 }
 
-func parseCSVData(records [][]string) ([]model.Pokemon, error) {
-	jobs := make(chan []string, 4)
-	results := make(chan model.Pokemon, 4)
+func parseCSVData(records [][]string, comp, items, itemsPerWorkers int) ([]model.Pokemon, error) {
+	jobs := make(chan []string, items)
+	results := make(chan model.Pokemon, items)
 	var pokemons []model.Pokemon
 
-	for w := 1; w <= totalWorkers; w++ {
-		go worker(w, jobs, results)
+	for w := 1; w <= itemsPerWorkers; w++ {
+		go worker(w, comp, jobs, results)
 	}
 
 	// Send jobs
@@ -116,7 +154,7 @@ func parseCSVData(records [][]string) ([]model.Pokemon, error) {
 	close(jobs)
 
 	// Receive results
-	for a := 1; a <= len(records)-1; a++ {
+	for a := 1; a <= items; a++ {
 		result := <-results
 		pokemons = append(pokemons, result)
 	}
@@ -125,7 +163,7 @@ func parseCSVData(records [][]string) ([]model.Pokemon, error) {
 	return pokemons, nil
 }
 
-func worker(wId int, jobs <-chan []string, results chan<- model.Pokemon) {
+func worker(wId, comp int, jobs <-chan []string, results chan<- model.Pokemon) {
 	var wg sync.WaitGroup
 
 	for record := range jobs {
@@ -133,9 +171,20 @@ func worker(wId int, jobs <-chan []string, results chan<- model.Pokemon) {
 
 		go func(record []string) {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					log.Println("Worker Pool: recoverd from panic", r)
+				}
+			}()
 			id, err := strconv.Atoi(record[0])
 			if err != nil {
 				return
+			}
+
+			if comp == 0 || comp == 1 {
+				if id%2 != comp {
+					return
+				}
 			}
 
 			height, err := strconv.Atoi(record[2])

@@ -47,3 +47,23 @@ func (pa PokeAPI) GetPokemons() ([]model.Pokemon, error) {
 
 	return pokemons, nil
 }
+
+func (pa PokeAPI) GetEvenOdd(ty string, items, itemsPerWorkers int) ([]model.Pokemon, error) {
+	ls := LocalStorage{}
+	var comp int
+
+	if ty == "even" {
+		comp = 0
+	} else if ty == "odd" {
+		comp = 1
+	} else {
+		return nil, fmt.Errorf("type %q not supported", ty)
+	}
+
+	pokemons, err := ls.EvenOddRead(comp, items, itemsPerWorkers)
+	if err != nil {
+		return nil, err
+	}
+
+	return pokemons, nil
+}
